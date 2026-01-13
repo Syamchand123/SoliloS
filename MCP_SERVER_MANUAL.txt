@@ -1,0 +1,304 @@
+================================================================================
+          🤖 ULTIMATE AI API ANALYST MCP SERVER - COMPREHENSIVE MANUAL
+================================================================================
+
+--------------------------------------------------------------------------------
+1. INTRODUCTION
+--------------------------------------------------------------------------------
+This MCP (Model Context Protocol) Server is a production-grade, autonomous API Testing & Analysis platform designed to live inside an AI Agent's toolkit. It allows LLMs (like Claude) to perform end-to-end API engineering tasks—from discovery and reverse engineering to security auditing, load testing, and continuous monitoring—without leaving the chat interface.
+
+Why Use This?
+- Speed: Test APIs 10x faster than writing manual Python scripts.
+- Depth: built-in intelligence detects N+1 queries, overfetching, and security leaks.
+- Persistence: Creates, saves, and tracks test workflows over time.
+- Isolation: Supports multiple "Projects" and "Environments" (Staging vs Prod).
+- Versatility: Handles HTTP, GraphQL, WebSocket, and gRPC (even dynamic protos).
+
+How To Use It?
+1. Connect via MCP Client (e.g., Claude Desktop).
+2. Create a Project: `create_project("my_app")`.
+3. Set Environment: `set_environment("prod", {"base_url": "https://api.myapp.com"})`.
+4. Start Testing using the 44 robust tools described below.
+
+--------------------------------------------------------------------------------
+2. TOOL REFERENCE (44 TOOLS)
+--------------------------------------------------------------------------------
+
+[A] CORE INFRASTRUCTURE (Global State Management)
+These tools manage the workspace, variables, and request state.
+
+1. create_project
+   - Description: Creates a new isolated workspace. Each project has its own separate history, variables, and monitoring database.
+   - Use Cases: Switching between working on Client A and Client B.
+   - Example: create_project("ecommerce_v2")
+
+2. switch_project
+   - Description: Activates a specific project workspace.
+   - Use Cases: Returning to a previous task.
+   - Example: switch_project("ecommerce_v2")
+
+3. set_environment
+   - Description: Defines a named environment (e.g., 'local', 'staging', 'prod') with associated variables.
+   - Use Cases: Storing base URLs and API keys for different deployment stages.
+   - Example: set_environment("staging", {"base_url": "https://staging.api.com", "key": "123"})
+
+4. switch_environment
+   - Description: Switches the active environment variables.
+   - Use Cases: Running the same test suite against Production after verifying in Staging.
+   - Example: switch_environment("staging")
+
+5. set_variable
+   - Description: Sets a global variable for the current session. Can be used for dynamic values extracted from responses.
+   - Use Cases: Storing a JWT token after login to use in subsequent requests.
+   - Example: set_variable("auth_token", "eyJhbG...") -> Use as {{auth_token}}
+
+6. get_state_debug
+   - Description: Returns the current internal state (active project, env, variables count).
+   - Use Cases: Debugging why a variable isn't substituting correctly.
+   - Example: get_state_debug()
+
+[B] REQUEST EXECUTION (The Engine)
+Tools to send traffic.
+
+7. make_request
+   - Description: The workhorse. Sends HTTP requests (GET, POST, PUT, DELETE, PATCH). Supports {{variable}} substitution in URL, Headers, and Body.
+   - Use Cases: Testing any REST endpoint.
+   - Example: make_request("POST", "{{base_url}}/users", {"name": "Alice"})
+
+8. set_auth
+   - Description: Configures global authentication for the session.
+   - Use Cases: Setting checking 'Bearer Token' or 'API Key' headers once for all future requests.
+   - Example: set_auth("header", "Authorization: Bearer {{auth_token}}")
+
+9. get_saved_requests
+   - Description: Lists requests saved during the session (using the `save_as` parameter in make_request).
+   - Use Cases: Reviewing what requests are available to build a workflow.
+   - Example: get_saved_requests()
+
+[C] WORKFLOW AUTOMATION
+Tools to chain requests together.
+
+10. run_workflow
+    - Description: Executes a sequence of requests. Supports data extraction (pipeline) where step 1's output becomes step 2's input.
+    - Use Cases: Testing "Login -> Get Profile -> Update Profile" flows automatically.
+    - Example: run_workflow([{"request_name": "login"}, {"request_name": "get_profile"}])
+
+11. list_workflows
+    - Description: Lists all saved workflow definitions.
+    - Use Cases: Seeing what test flows exist.
+    - Example: list_workflows()
+
+[D] INTELLIGENCE & ANALYSIS (The Brain)
+Tools that analyze responses for quality and correctness.
+
+12. analyze_response_deep
+    - Description: AI-powered-like heuristic analysis. Checks for standard headers, performance issues, N+1 patterns, and overfetching.
+    - Use Cases: "Why is this API slow?" or "Is this response standard compliant?"
+    - Example: analyze_response_deep(response_object)
+
+13. validate_response
+    - Description: Validates a response against strict expectations (status code, max time, body content).
+    - Use Cases: Unit testing a single endpoint validation.
+    - Example: validate_response(resp, {"status": 200, "max_time_ms": 500})
+
+14. compare_requests
+    - Description: Sends two requests in parallel and diffs the results.
+    - Use Cases: A/B testing, comparing Staging vs Prod, or comparing "Normal User" vs "Admin" response.
+    - Example: compare_requests("GET", "http://prod/api", "http://dev/api")
+
+15. validate_contract
+    - Description: Validates response body against a JSON Schema or OpenAPI definition.
+    - Use Cases: Ensuring the API output strictly matches the frontend contract.
+    - Example: validate_contract(resp, "jsonschema", "{type: object...}")
+
+16. detect_breaking_changes
+    - Description: Compares two JSON structures to find backward-incompatible changes (removed fields, type changes).
+    - Use Cases: Preventing regressions before deployment.
+    - Example: detect_breaking_changes(old_resp, new_resp)
+
+17. compare_api_versions
+    - Description: High-level wrapper to fetch and compare two versions of an API endpoint.
+    - Use Cases: "What changed between v1 and v2?"
+    - Example: compare_api_versions("http://api/v1/user", "http://api/v2/user")
+
+18. quick_load_test
+    - Description: Runs a simple burst (e.g., 50 requests) to get P99 latency stats.
+    - Use Cases: Quick sanity check on performance.
+    - Example: quick_load_test("GET", "http://api.com/fast")
+
+[E] SECURITY SUITE (The Guardian)
+Tools to find vulnerabilities.
+
+19. scan_endpoint_security
+    - Description: Passive scan. Checks for missing security headers (HSTS, X-Frame-Options) and info leakage (Stack traces).
+    - Use Cases: Basic security hygiene check.
+    - Example: scan_endpoint_security("GET", "http://api.com")
+
+20. fuzz_endpoint
+    - Description: Active fuzzing. Injects common payloads (SQLi, XSS, Path Traversal) into parameters to provoke errors.
+    - Use Cases: Finding "low hanging fruit" vulnerabilities.
+    - Example: fuzz_endpoint("GET", "http://api.com/users", target_param="id")
+
+21. scan_for_sensitive_data
+    - Description: Scans response bodies for PII (Emails, Credit Cards, API Keys) using regex.
+    - Use Cases: DLP (Data Loss Prevention) checks.
+    - Example: scan_for_sensitive_data({"body": "key=12345"})
+
+22. test_rate_limiting
+    - Description: Hammers an endpoint to verify if 429 Too Many Requests is returned.
+    - Use Cases: Verifying DDoS protection or API quotas.
+    - Example: test_rate_limiting("http://api.com/login")
+
+23. test_authorization
+    - Description: Matrix testing. Tests an endpoint with multiple user tokens (Admin, User, Guest) to check access control (IDOR).
+    - Use Cases: Verifying that "Guest" cannot access "Admin" routes.
+    - Example: test_authorization("/admin", {"users": {"guest": "token1"}})
+
+[F] SCENARIOS & STRESS (The Hammer)
+Tools to simulate complex usage.
+
+24. test_user_flow
+    - Description: Runs a multi-step user journey with "Rollback" capabilities (simulated cleanup).
+    - Use Cases: checking e-commerce checkout flow.
+    - Example: test_user_flow({"steps": [...]})
+
+25. stress_test
+    - Description: Increasing load test. Ramps up users to find the breaking point.
+    - Use Cases: Capacity planning.
+    - Example: stress_test("http://api.com", max_users=100)
+
+26. realistic_load_test
+    - Description: Simulates persistent users with think-time (delays) and distinct behaviors.
+    - Use Cases: Simulating real-world traffic patterns.
+    - Example: realistic_load_test({"users": {"browser": {"count": 10}}})
+
+27. test_error_scenarios
+    - Description: Specifically sends bad data (nulls, empty strings, max length) to see if API crashes (500) or handles gracefully (400).
+    - Use Cases: Robustness testing.
+    - Example: test_error_scenarios("http://api.com/form", ["missing_fields"])
+
+[G] DISCOVERY & REVERSE ENGINEERING (The Explorer)
+Tools to map unknown APIs.
+
+28. discover_api
+    - Description: Probes common paths (/api, /docs, /swagger) to find entry points.
+    - Use Cases: Black-box testing a new target.
+    - Example: discover_api("http://unknown-api.com")
+
+29. reverse_engineer_api
+    - Description: Parses raw text logs to extract API endpoints.
+    - Use Cases: Reconstructing API specs from server logs.
+    - Example: reverse_engineer_api("GET /users HTTP/1.1...")
+
+30. reverse_engineer_har
+    - Description: Parses a HAR (Browser Network Export) file to extract a list of endpoints.
+    - Use Cases: "I clicked around the website, now give me the API list."
+    - Example: reverse_engineer_har("myapp_session.har")
+
+[H] ADVANCED PROTOCOLS (The Specialist)
+Tools for non-REST APIs.
+
+31. query_graphql
+    - Description: Sends GraphQL queries/mutations.
+    - Use Cases: Testing GraphQL endpoints.
+    - Example: query_graphql("http://api.com/graphql", "query { users { id } }")
+
+32. test_websocket
+    - Description: Connects to a WebSocket, sends a message, and waits for a response.
+    - Use Cases: Testing chat apps or real-time feeds.
+    - Example: test_websocket("ws://api.com/chat", ["Hello"])
+
+33. test_grpc
+    - Description: Basic gRPC connectivity using reflection.
+    - Use Cases: Health checking gRPC services.
+    - Example: test_grpc("localhost:50051", "Service", "Method")
+
+34. register_proto (Dynamic gRPC)
+    - Description: Compiles a .proto file at runtime to enable full gRPC testing.
+    - Use Cases: Testing gRPC when you have the .proto source.
+    - Example: register_proto("my_service.proto")
+
+35. call_grpc_dynamic (Dynamic gRPC)
+    - Description: Calls a method on a dynamically compiled protobuf service using a JSON payload.
+    - Use Cases: Full functional testing of gRPC methods.
+    - Example: call_grpc_dynamic("package.Service", "Method", {"id": 1})
+
+36. chaos_test
+    - Description: Simulates network faults (latency, dropped packets) via proxy/interceptor logic (soft simulation).
+    - Use Cases: Testing client resilience.
+    - Example: chaos_test("http://api.com/critical")
+
+[I] MONITORING & PERSISTENCE (The Watcher)
+Tools that remember history.
+
+37. monitor_endpoint
+    - Description: Pings an endpoint repeatedly, stores results in SQLite, and alerts on failure.
+    - Use Cases: Uptime monitoring.
+    - Example: monitor_endpoint("http://api.com", interval=5, iterations=10)
+
+38. compare_over_time
+    - Description: Analyzes historical data from SQLite to show trends (e.g., latency increasing).
+    - Use Cases: "Is the API getting slower since the last release?"
+    - Example: compare_over_time("http://api.com")
+
+39. compare_environments (Gap Filler)
+    - Description: Batch compares a list of endpoints across two base URLs (e.g., Staging vs Prod).
+    - Use Cases: Deployment verification.
+    - Example: compare_environments(["/users", "/items"], {"prod": "...", "dev": "..."})
+
+[J] REPORTING & EXPORT (The Deliverable)
+Tools to share results.
+
+40. generate_test_report
+    - Description: Generates a summary report in JSON, Markdown, HTML, JUnit XML, or PDF.
+    - Use Cases: CI/CD artifacts or sending to management.
+    - Example: generate_test_report(format="pdf")
+
+41. export_to_postman
+    - Description: Converts saved requests into a Postman Collection (v2.1).
+    - Use Cases: Handing off to manual QA teams.
+    - Example: export_to_postman("My API Collection")
+
+42. export_to_openapi
+    - Description: reverse-engineers saved requests into a valid OpenAPI 3.0 spec.
+    - Use Cases: Documenting an undocumented API.
+    - Example: export_to_openapi("My API Spec")
+
+43. export_to_ci
+    - Description: Generates GitHub Actions (or GitLab CI) YAML files to run these tests automatically.
+    - Use Cases: Setting up a nightly build pipeline.
+    - Example: export_to_ci({"provider": "github"})
+
+44. find_required_fields
+    - Description: Smart Fuzzer. Iteratively removes fields from a payload to see which ones cause 400 errors, identifying required fields.
+    - Use Cases: Documenting schema requirements.
+    - Example: find_required_fields("http://api.com/post", full_payload)
+
+--------------------------------------------------------------------------------
+3. EXAMPLES AND GUIDES
+--------------------------------------------------------------------------------
+[Scenario: Daily Deployment Check]
+1. `create_project("daily_check")`
+2. `make_request("POST", "http://api.com/login", ...)` -> Save as "login"
+3. `set_variable("token", "{{login.body.token}}")`
+4. `set_auth("header", "Bearer {{token}}")`
+5. `run_workflow([{"request_name": "login"}, {"method": "GET", "url": "http://api.com/profile"}])`
+6. `compare_environments(["/profile"], {"prod": "http://prod", "stage": "http://stage"})`
+7. `generate_test_report("html")`
+
+[Scenario: Security Audit]
+1. `discover_api("http://target.com")`
+2. For each endpoint:
+   - `scan_endpoint_security(...)`
+   - `fuzz_endpoint(...)`
+   - `test_rate_limiting(...)`
+
+[Deployment]
+This server is Docker-ready.
+1. Build: `docker build -t mcp-analyst .`
+2. Run: `docker run -p 8000:8000 mcp-analyst`
+3. Connect via SSE: http://localhost:8000/sse
+
+================================================================================
+END OF MANUAL
+================================================================================

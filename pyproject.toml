@@ -1,0 +1,30 @@
+[project]
+name = "solilos"
+version = "1.0.0"
+description = "A production-grade MCP server for API testing, automation, and security analysis"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+    "numpy>=1.24.0",  # For statistical analysis (p50, p99)
+    "python-dotenv>=1.0.0",
+    "jsonschema>=4.0.0",
+    "faker>=20.0.0",
+    "jinja2>=3.1.0",
+    "websockets>=11.0",
+    "grpcio>=1.50.0",
+    "grpcio-tools>=1.50.0",
+    "protobuf>=4.0.0",
+    "junit-xml>=1.9",
+    "haralyzer>=2.0",
+    "weasyprint>=60.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
